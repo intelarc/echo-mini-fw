@@ -1,6 +1,7 @@
-# SNOWSKY Echo Mini firmware V1.9.0 teardown
+# SNOWSKY ECHO firmware V1.9.0 teardown
 
-Reverse engineering of `ECHOV190.IMG`, the firmware for FiiO's SNOWSKY Echo Mini cassette-style player.
+Reverse engineering of `ECHOV190.IMG`, the firmware for FiiO's SNOWSKY **ECHO**: the full-size aluminium cassette-style player with a 2.39″ screen.
+This is **not** the Echo Mini, whose firmware is `HIFIECxx.IMG`. Its hardware and tools are different, so don't mix the two.
 Everything here was worked out from the image itself: header parsing, resource decoding and Thumb-2 disassembly.
 
 This repo contains no firmware. Download the official `ECHOV190.IMG` from FiiO/SNOWSKY and build the mod from it (see below).
@@ -13,8 +14,8 @@ This repo contains no firmware. Download the official `ECHOV190.IMG` from FiiO/S
 |---|---|
 | SoC / SDK | Rockchip **RKnano** ("RKnano SDK 1.0"): bare-metal C with code overlays, no Linux and no RTOS |
 | CPUs | Two Cortex-M cores. The system/UI core runs from SRAM at `0x0300_0000`. The audio core runs the codecs at `0x0100_0000` (code) and `0x0102_0000` (data), and asks the system core for file I/O (`HifiFileRead: timeout!!` etc.) |
-| Display | 480×222, RGB565 |
-| DAC | Two chips on I²C (`dac60_Left` / `dac66_Right`). The five filter modes (fast/slow × minimum/linear phase, plus NOS) match Cirrus CS43131 |
+| Display | 2.39″, 480×222, big-endian RGB565. This matches photos of the real screen: red reel hubs and blue-cyan format text |
+| DAC | Two Cirrus CS43198 chips on I²C (`dac60_Left` / `dac66_Right`), with five filter modes: fast/slow × minimum/linear phase, plus NOS |
 | Codecs | MP3, WMA, AAC/M4A, WAV, OGG, FLAC, ALAC, APE, DFF and DSF, one overlay each on the audio core |
 | Build date | 2026-08-24 (BCD in the header) |
 | UI text | 21 languages × 453 menu/message strings |
@@ -148,6 +149,33 @@ The result should have RKCRC32 `0x2f55370c`. The generator needs numpy and Pillo
 - List text is black on the White theme and white on the Black theme (`0x3065A7E`). The new highlight bars keep about the stock bars' brightness, so the text stays readable.
 - Pure red `(255,0,0)` is a transparency key wherever it has hard edges: dialog-box corners, tape-strip overlays, and the USB-DAC frames' cut-out for the page dots. Those pixels are never changed. Anti-aliased pure red (the progress knob, reel hubs) is a visible colour and gets recoloured.
 - Boot frames are drawn at the top-left and cropped on the right and bottom. The generator simulates playback and fails if any frame would leave pixels behind.
+
+## If something goes wrong
+
+**Before flashing:**
+- Charge the player above 50%, take out the TF card, and back up your music.
+- Keep the official `ECHOV190.IMG`.
+- Download FiiO's ECHO recovery kit now, while you don't need it: [BlackVllad/ECHO-Firmware-Tool](https://github.com/BlackVllad/ECHO-Firmware-Tool). It contains `RKDevelopTool.exe`, the Rockusb driver, and the ECHO factory image `HT9099(ECHO)…_SW_V1.2.0…img`.
+
+**Recovery, from easiest to hardest:**
+
+1. **The player boots but something looks wrong.**
+   - Switch themes in Settings → Interface Style.
+   - Or copy the official `ECHOV190.IMG` to the root of the internal storage, eject, and restart.
+   The updater runs early in the boot code, which these mods don't change.
+2. **An update was interrupted** (battery died or USB was pulled).
+   - The firmware keeps two copies and writes each copy's header last, so a half-written copy is detected as invalid.
+   - At the next boot it starts from the intact copy and copies that over the damaged one. The menu text "Firmware Recovery in Progress…" exists for this case.
+   - Leave it on the charger until it finishes, then copy the `.IMG` file again.
+3. **The player won't boot, or the PC doesn't see it as a USB disk.**
+   - Use FiiO's kit: install the Rockusb driver, open `RKDevelopTool.exe`, and load the ECHO factory image (renamed to something plain, like `firmware.img`).
+   - With the player connected, the tool should report a MASKROM or Loader device. If it reports an MSC (USB disk) device, click **Switch**.
+   - Then click **Erase system block** and **Upgrade**. Expect internal storage to be wiped.
+   - Afterwards, update back to V1.9.0 the normal way.
+   - The kit says that if no device is found, you should restart the player with a long press of the reset button. I haven't found a documented button combination that forces recovery mode on the ECHO.
+4. **Nothing works.** Contact FiiO/SNOWSKY support. They are the source of the recovery kit, but modified firmware may affect warranty service.
+
+**Don't use Echo Mini recovery guides or firmware on the ECHO** (`HIFIEC*.IMG`, raw `rkdeveloptool` writes, RECHO). It's a different device with a different flash layout.
 
 ## Ideas for further work
 

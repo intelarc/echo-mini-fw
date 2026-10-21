@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unpack / repack firmware for the FiiO SNOWSKY Echo Mini (Rockchip RKnano, ECHOVxxx.IMG).
+"""Unpack / repack firmware for the FiiO SNOWSKY ECHO (Rockchip RKnano, ECHOVxxx.IMG; not the Echo Mini).
 
     python echofw.py info   ECHOV190.IMG
     python echofw.py unpack ECHOV190.IMG work/
