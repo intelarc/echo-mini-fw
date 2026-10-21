@@ -2,4 +2,5 @@
 *.IMG
 *.img
 v190/
+themes/*/build/
 __pycache__/

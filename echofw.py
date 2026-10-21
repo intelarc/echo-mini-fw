@@ -297,14 +297,18 @@ def cmd_pack(args):
     img = bytearray(open(os.path.join(src, 'base.img'), 'rb').read())
     h = parse_header(img)
     changed = []
-    patch = read_text_patch(args.text_patch) if args.text_patch else {}
+    patch = {}
+    for p in args.text_patch:                      # later patches win
+        for code, rows in read_text_patch(p).items():
+            patch.setdefault(code, {}).update(rows)
 
     ents = image_table(img, h['blobs'])
     manifest = json.load(open(os.path.join(src, 'manifest.json'), encoding='utf-8'))
     for e, m in zip(ents, manifest['images']):
         path = os.path.join(src, 'images', m['png'])
-        if args.images and os.path.exists(os.path.join(args.images, m['png'])):
-            path = os.path.join(args.images, m['png'])
+        for d in args.images:                      # later folders win
+            if os.path.exists(os.path.join(d, m['png'])):
+                path = os.path.join(d, m['png'])
         if not os.path.exists(path):
             continue
         new = png_to_rgb565be(path, e['w'], e['h'])
@@ -346,8 +350,10 @@ def main():
     p = sub.add_parser('info'); p.add_argument('image'); p.set_defaults(fn=cmd_info)
     p = sub.add_parser('unpack'); p.add_argument('image'); p.add_argument('outdir'); p.set_defaults(fn=cmd_unpack)
     p = sub.add_parser('pack'); p.add_argument('workdir'); p.add_argument('output')
-    p.add_argument('--text-patch', help='TSV of lang/index/text overrides applied on top of strings/*.tsv')
-    p.add_argument('--images', help='folder of PNGs (same names as images/) that override the workdir ones')
+    p.add_argument('--text-patch', action='append', default=[],
+                   help='TSV of lang/index/text overrides on top of strings/*.tsv (repeatable; later wins)')
+    p.add_argument('--images', action='append', default=[],
+                   help='folder of PNGs (same names as images/) overriding the workdir ones (repeatable; later wins)')
     p.set_defaults(fn=cmd_pack)
     args = ap.parse_args()
     if hasattr(sys.stdout, 'reconfigure'):

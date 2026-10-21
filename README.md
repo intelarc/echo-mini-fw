@@ -120,8 +120,37 @@ The player deletes the file after flashing. To go back to stock, do the same wit
 
 The mod passes the same checks as the official file and changes only text slots and pixels, with every offset and size unchanged. The update routine lives in the main firmware, though. If a firmware ever failed to boot far enough to scan for `.IMG` files, recovery would need Rockchip's USB recovery tools, which I haven't tried with this player.
 
+## Retro theme
+
+`themes/retro/` restyles both interface styles after mid-2000s MP3 players. It also includes the fixes above.
+
+![retro theme](docs/retro-theme.png)
+
+- **Retro White (iPod video, 2005):** brighter silver-white, with blue in place of red. List highlights become a glossy blue gradient bar, and the selected menu tile and page dot turn blue.
+- **Retro Black (Sony Walkman, 2007):** deeper black, with orange in place of red. List highlights become an orange gradient bar, and the selected tile and page dot turn orange.
+- **Boot and shutdown:** a new animation (a ring draws in, a play mark appears, then the `echo` wordmark wipes in with a glossy reflection) and a matching "goodbye" screen. Both themes share these.
+- **Menu names:** Settings → Interface Style shows "Retro White" and "Retro Black".
+
+To build it:
+
+```bash
+python themes/retro/make_retro.py v190 themes/retro/build
+```
+
+```bash
+python echofw.py pack v190 ECHOECHO.IMG --text-patch mods/text-fixes.tsv --text-patch themes/retro/text.tsv --images mods/images --images themes/retro/build
+```
+
+The result should have RKCRC32 `0x2f55370c`. The generator needs numpy and Pillow, and the Windows fonts Segoe UI Semibold and Bahnschrift.
+
+**What it relies on (found in the code):**
+- Images 093 and up are themed. The firmware adds 363 to the image number when the Black theme is on (setting byte `+0x349`), so 093–455 are White and 456–818 are Black. Images 000–092 are shared.
+- List text is black on the White theme and white on the Black theme (`0x3065A7E`). The new highlight bars keep about the stock bars' brightness, so the text stays readable.
+- Pure red `(255,0,0)` is a transparency key wherever it has hard edges: dialog-box corners, tape-strip overlays, and the USB-DAC frames' cut-out for the page dots. Those pixels are never changed. Anti-aliased pure red (the progress knob, reel hubs) is a visible colour and gets recoloured.
+- Boot frames are drawn at the top-left and cropped on the right and bottom. The generator simulates playback and fails if any frame would leave pixels behind.
+
 ## Ideas for further work
 
-- **Custom themes:** redraw the PNGs, keeping each image's size. `010`–`044` are the boot animation and `045` is the shutdown screen. `000`–`009` are full-screen `TEST` images (sample player screens, a logo and RGB bars) whose use I haven't confirmed.
+- **More themes:** `themes/retro/make_retro.py` is a starting point. `000`–`009` are full-screen `TEST` images (sample player screens, a logo and RGB bars) whose use I haven't confirmed.
 - **Better fonts:** the 12/16 px fonts are 1-bit with no anti-aliasing. A pixel font could be rasterised into the same glyph slots.
 - **Code patches** (volume curve, the 3-second "previous track" threshold, button modes) are possible. The overlays are small and load at fixed addresses. They would need more reverse engineering and a way to recover a bricked unit before trying.
