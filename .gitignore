@@ -1,0 +1,5 @@
+# Firmware and unpacked vendor assets are not redistributed
+*.IMG
+*.img
+v190/
+__pycache__/

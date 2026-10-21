@@ -1,0 +1,24 @@
+lang	index	text
+# Language picker names, shared by every language (the Czech table already had "Čeština").
+*	359	Español
+*	440	Español
+*	366	Nederlands
+*	447	Nederlands
+*	368	Čeština
+*	449	Čeština
+# English menu text, checked against the Chinese source strings.
+en	97	Recordings
+en	102	Resume Playback
+en	236	Cassette Style
+en	238	VU Meter Style
+en	239	Rhythm Style
+en	247	Cross-Folder Skip
+en	259	Digital Filter
+en	268	Button Mode
+en	272	Swap Volume Buttons
+en	275	Lyrics
+en	342	1 Minute
+en	349	Midnight Black
+en	372	UAC Charging Mode
+en	381	Text Settings
+en	386	Background
